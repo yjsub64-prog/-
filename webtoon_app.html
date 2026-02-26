@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>웹툰 자동화 공장</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d14;
+    --surface: #13131f;
+    --card: #1a1a2e;
+    --border: #2a2a45;
+    --accent1: #ff4d6d;
+    --accent2: #7c3aed;
+    --accent3: #06b6d4;
+    --text: #f0f0f8;
+    --muted: #888899;
+    --success: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* 헤더 */
+  header {
+    background: linear-gradient(135deg, #1a0533 0%, #0d1a3a 50%, #1a0020 100%);
+    padding: 32px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 50%, rgba(255,77,109,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  header h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 2.4rem;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+  }
+  header p {
+    color: var(--muted);
+    margin-top: 6px;
+    font-size: 0.9rem;
+    position: relative;
+  }
+
+  /* 메인 레이아웃 */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+  /* 공장 카드 */
+  .factory-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 768px) {
+    .factory-grid { grid-template-columns: 1fr; }
+  }
+
+  .factory-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .factory-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+
+  .factory-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .factory-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+  .factory-1 .factory-icon { background: linear-gradient(135deg, #ff4d6d33, #ff4d6d22); }
+  .factory-2 .factory-icon { background: linear-gradient(135deg, #7c3aed33, #7c3aed22); }
+  .factory-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .factory-header span {
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+  .factory-body { padding: 20px 24px 24px; }
+
+  /* 입력 */
+  label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  textarea, select, input[type=text] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.88rem;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+  textarea:focus, select:focus, input:focus {
+    border-color: var(--accent2);
+  }
+  select { cursor: pointer; }
+
+  .form-row { margin-bottom: 14px; }
+
+  /* 버튼 */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-1 {
+    background: linear-gradient(135deg, var(--accent1), #c2185b);
+    color: white;
+  }
+  .btn-1:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,77,109,0.4); }
+  .btn-2 {
+    background: linear-gradient(135deg, var(--accent2), #4c1d95);
+    color: white;
+  }
+  .btn-2:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* 출력 박스 */
+  .output-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: var(--text);
+    min-height: 120px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin-top: 14px;
+    display: none;
+  }
+  .output-box.visible { display: block; }
+
+  /* 프롬프트 아이템 */
+  .prompt-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .prompt-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .prompt-item-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent1);
+  }
+  .prompt-item-filename {
+    font-size: 0.75rem;
+    color: var(--accent3);
+    background: rgba(6,182,212,0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .prompt-text {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+    background: var(--surface);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .prompt-text:hover { background: #1e1e35; }
+  .copy-hint {
+    font-size: 0.7rem;
+    color: var(--accent3);
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  /* 이미지 업로드 */
+  .upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 14px;
+  }
+  .upload-area:hover, .upload-area.dragover {
+    border-color: var(--accent2);
+    background: rgba(124,58,237,0.05);
+  }
+  .upload-area p { color: var(--muted); font-size: 0.85rem; margin-top: 8px; }
+  .upload-area .icon { font-size: 2rem; }
+
+  /* 업로드된 이미지 목록 */
+  .image-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .image-thumb {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .image-thumb .img-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.7);
+    font-size: 0.6rem;
+    padding: 2px 4px;
+    text-align: center;
+    color: var(--accent3);
+  }
+  .image-thumb .del-btn {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(255,77,109,0.8);
+    border: none;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    cursor: pointer;
+    color: white;
+    font-size: 0.6rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* 상태 배지 */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-top: 10px;
+  }
+  .status.ok { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+  .status.warn { background: rgba(255,77,109,0.12); color: var(--accent1); border: 1px solid rgba(255,77,109,0.3); }
+  .status.info { background: rgba(6,182,212,0.12); color: var(--accent3); border: 1px solid rgba(6,182,212,0.3); }
+
+  /* API 키 섹션 */
+  .api-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .api-section h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .api-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+  .api-row .btn { width: auto; padding: 10px 20px; margin-top: 0; }
+
+  /* 로딩 */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 화살표 구분선 */
+  .arrow-divider {
+    text-align: center;
+    font-size: 2rem;
+    color: var(--muted);
+    margin: 8px 0;
+    animation: bounce 1.5s infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  /* 완성 웹툰 미리보기 */
+  .preview-section {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    display: none;
+  }
+  .preview-section.visible { display: block; }
+  .preview-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .preview-header h3 { font-size: 1rem; font-weight: 700; }
+  .btn-download {
+    background: linear-gradient(135deg, var(--success), #059669);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .btn-download:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+  .preview-body { padding: 20px 24px; }
+  .webtoon-panel {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .webtoon-panel img { width: 100%; display: block; }
+  .panel-dialogues {
+    background: var(--surface);
+    padding: 10px 14px;
+  }
+  .d-speech { border-left: 3px solid #7c3aed; padding: 6px 10px; margin: 4px 0; border-radius: 6px; background: rgba(255,255,255,0.03); font-size: 0.85rem; }
+  .d-thought { border-left: 3px dashed #7c3aed; padding: 6px 10px; margin: 4px 0; border-radius: 6px; background: rgba(124,58,237,0.08); font-size: 0.85rem; font-style: italic; }
+  .d-narration { border-left: 3px solid #ffc800; padding: 6px 10px; margin: 4px 0; border-radius: 6px; background: rgba(255,200,0,0.06); font-size: 0.82rem; color: var(--muted); }
+  .d-char { font-size: 0.72rem; font-weight: 700; color: var(--accent1); display: block; margin-bottom: 2px; }
+  .scene-badge {
+    text-align: center;
+    margin: 16px 0 8px;
+  }
+  .scene-badge span {
+    background: rgba(255,77,109,0.1);
+    border: 1px solid rgba(255,77,109,0.3);
+    color: var(--accent1);
+    font-size: 0.8rem;
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--success);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 9999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎌 웹툰 자동화 공장</h1>
+  <p>대본 입력 → 프롬프트 생성 → Grok 이미지 업로드 → 웹툰 완성!</p>
+</header>
+
+<div class="container">
+
+  <!-- API 키 설정 -->
+  <div class="api-section">
+    <h3>🔑 OpenAI API 키 설정 <span style="color:var(--accent3);font-weight:400">(대본 분석용)</span></h3>
+    <div class="api-row">
+      <div>
+        <label>API KEY</label>
+        <input type="text" id="apiKey" placeholder="sk-..." value="">
+      </div>
+      <button class="btn btn-1" style="width:auto;padding:10px 20px;margin-top:0" onclick="saveApiKey()">저장</button>
+    </div>
+    <div id="apiStatus"></div>
+  </div>
+
+  <div class="factory-grid">
+
+    <!-- 1공장 -->
+    <div class="factory-card factory-1">
+      <div class="factory-header">
+        <div class="factory-icon">🏭</div>
+        <div>
+          <h2>1공장 — 프롬프트 생성기</h2>
+          <span>대본 투입 → Grok용 이미지 프롬프트 출력</span>
+        </div>
+      </div>
+      <div class="factory-body">
+        <div class="form-row">
+          <label>웹툰 대본</label>
+          <textarea id="scriptInput" rows="8" placeholder="여기에 대본을 붙여넣으세요...
+
+예시:
+제목: 별빛 카페
+
+등장인물:
+- 하늘: 20대 여성, 짧은 검은 머리
+- 준혁: 20대 남성, 갈색 머리
+
+씬 1 - 카페 앞
+하늘이 카페 앞에 서 있다.
+하늘: (생각) 여기가 맞나..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>스타일</label>
+          <select id="styleSelect">
+            <option value="manga">manga (일본 애니 스타일)</option>
+            <option value="manhwa">manhwa (한국 웹툰 스타일)</option>
+            <option value="comics">comics (미국 코믹스 스타일)</option>
+          </select>
+        </div>
+        <button class="btn btn-1" id="btn1" onclick="generatePrompts()">
+          <span>🚀 프롬프트 생성하기</span>
+        </button>
+        <div id="promptOutput"></div>
+      </div>
+    </div>
+
+    <!-- 2공장 -->
+    <div class="factory-card factory-2">
+      <div class="factory-header">
+        <div class="factory-icon">🏗️</div>
+        <div>
+          <h2>2공장 — 웹툰 완성기</h2>
+          <span>Grok 이미지 업로드 → 말풍선 합성 → 완성!</span>
+        </div>
+      </div>
+      <div class="factory-body">
+        <div class="form-row">
+          <label>이미지 업로드 <span style="color:var(--accent3)">(파일명: s01_p01.png 형식)</span></label>
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()"
+               ondragover="event.preventDefault();this.classList.add('dragover')"
+               ondragleave="this.classList.remove('dragover')"
+               ondrop="handleDrop(event)">
+            <div class="icon">📁</div>
+            <p>클릭하거나 이미지를 드래그하세요</p>
+            <p style="font-size:0.75rem;margin-top:4px">s01_p01.png, s02_p01.png ...</p>
+          </div>
+          <input type="file" id="imageInput" accept="image/*" multiple style="display:none" onchange="handleImageUpload(this.files)">
+          <div class="image-list" id="imageList"></div>
+        </div>
+        <button class="btn btn-2" id="btn2" onclick="buildWebtoon()" disabled>
+          <span>✨ 웹툰 완성하기</span>
+        </button>
+        <div id="factory2Status"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 완성 웹툰 미리보기 -->
+  <div class="preview-section" id="previewSection">
+    <div class="preview-header">
+      <h3>🎌 완성된 웹툰</h3>
+      <button class="btn-download" onclick="downloadHTML()">💾 HTML 다운로드</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── 전역 상태 ───────────────────────────────────
+let parsedData = null;
+let uploadedImages = {}; // filename → dataURL
+
+// ─── API 키 ───────────────────────────────────────
+function saveApiKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key || key === 'sk-...') {
+    showStatus('apiStatus', '⚠️ API 키를 입력하세요', 'warn');
+    return;
+  }
+  localStorage.setItem('openai_key', key);
+  showStatus('apiStatus', '✅ API 키 저장됨', 'ok');
+}
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('openai_key');
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+    showStatus('apiStatus', '✅ 저장된 키 로드됨', 'ok');
+  }
+});
+
+function getApiKey() {
+  return document.getElementById('apiKey').value.trim() || localStorage.getItem('openai_key') || '';
+}
+
+// ─── 1공장: 프롬프트 생성 ─────────────────────────
+async function generatePrompts() {
+  const script = document.getElementById('scriptInput').value.trim();
+  const style  = document.getElementById('styleSelect').value;
+  const apiKey = getApiKey();
+
+  if (!script) { showToast('대본을 입력해주세요!'); return; }
+  if (!apiKey)  { showToast('API 키를 먼저 입력해주세요!'); return; }
+
+  const btn = document.getElementById('btn1');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 분석 중...';
+
+  const STYLE_PREFIX = {
+    manga:   'anime style, manga illustration, masterpiece, best quality,',
+    manhwa:  'korean webtoon style, clean line art, vibrant colors,',
+    comics:  'american comic style, bold outlines, flat colors,',
+  };
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        temperature: 0.3,
+        messages: [
+          {
+            role: 'system',
+            content: `웹툰 대본 분석 전문가. 반드시 순수 JSON만 반환:
+{
+  "title": "제목",
+  "characters": {
+    "캐릭터명": {
+      "appearance": "외모(한국어)",
+      "personality": "성격",
+      "appearance_en": "English appearance"
+    }
+  },
+  "scenes": [{
+    "scene_number": 1,
+    "location": "장소",
+    "panels": [{
+      "panel_number": 1,
+      "action": "장면묘사",
+      "characters_present": ["캐릭터명"],
+      "image_prompt_en": "detailed English prompt",
+      "image_filename": "s01_p01.png",
+      "dialogues": [{"character":"이름","text":"대사","type":"speech또는thought또는narration"}]
+    }]
+  }]
+}`
+          },
+          { role: 'user', content: `분석:\n\n${script}` }
+        ]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    let raw = data.choices[0].message.content.trim();
+    if (raw.startsWith('```')) {
+      raw = raw.split('```')[1];
+      if (raw.startsWith('json')) raw = raw.slice(4);
+    }
+    parsedData = JSON.parse(raw.trim());
+
+    // 프롬프트 출력
+    const stylePrefix = STYLE_PREFIX[style] || STYLE_PREFIX.manga;
+    let html = `<div style="margin-top:14px">`;
+    html += `<div class="status ok" style="margin-bottom:12px">✅ 분석 완료! 제목: <b>${parsedData.title}</b></div>`;
+
+    for (const scene of parsedData.scenes) {
+      for (const panel of scene.panels) {
+        const chars = (panel.characters_present || [])
+          .map(c => parsedData.characters[c]?.appearance_en || '')
+          .filter(Boolean).join(', ');
+        const fullPrompt = `${stylePrefix} ${panel.image_prompt_en}${chars ? ', ' + chars : ''}, no text, no watermark, high quality`;
+
+        html += `<div class="prompt-item">
+          <div class="prompt-item-header">
+            <span class="prompt-item-title">씬${scene.scene_number} 패널${panel.panel_number}</span>
+            <span class="prompt-item-filename">${panel.image_filename}</span>
+          </div>
+          <div class="prompt-text" onclick="copyPrompt(this, '${fullPrompt.replace(/'/g,"\\'")}')">
+            ${fullPrompt}
+          </div>
+          <div class="copy-hint">👆 클릭하면 복사됩니다</div>
+        </div>`;
+      }
+    }
+    html += `</div>`;
+    document.getElementById('promptOutput').innerHTML = html;
+
+    // 2공장 활성화
+    document.getElementById('btn2').disabled = false;
+    showToast('프롬프트 생성 완료! Grok에서 이미지를 만들어 업로드하세요 😊');
+
+  } catch(e) {
+    document.getElementById('promptOutput').innerHTML =
+      `<div class="status warn" style="margin-top:12px">❌ 오류: ${e.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>🚀 프롬프트 생성하기</span>';
+}
+
+function copyPrompt(el, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    el.style.background = 'rgba(16,185,129,0.15)';
+    setTimeout(() => el.style.background = '', 800);
+    showToast('복사됨! Grok에 붙여넣으세요 📋');
+  });
+}
+
+// ─── 이미지 업로드 ────────────────────────────────
+function handleImageUpload(files) {
+  for (const file of files) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      uploadedImages[file.name] = e.target.result;
+      renderImageList();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+function renderImageList() {
+  const list = document.getElementById('imageList');
+  list.innerHTML = '';
+  for (const [name, url] of Object.entries(uploadedImages)) {
+    const div = document.createElement('div');
+    div.className = 'image-thumb';
+    div.innerHTML = `
+      <img src="${url}" alt="${name}">
+      <div class="img-label">${name}</div>
+      <button class="del-btn" onclick="deleteImage('${name}')">✕</button>`;
+    list.appendChild(div);
+  }
+  const count = Object.keys(uploadedImages).length;
+  document.getElementById('factory2Status').innerHTML =
+    count > 0 ? `<div class="status info">📁 ${count}개 이미지 업로드됨</div>` : '';
+}
+
+function deleteImage(name) {
+  delete uploadedImages[name];
+  renderImageList();
+}
+
+// ─── 2공장: 웹툰 완성 ────────────────────────────
+function buildWebtoon() {
+  if (!parsedData) { showToast('먼저 1공장에서 대본을 분석해주세요!'); return; }
+
+  const btn = document.getElementById('btn2');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 생성 중...';
+
+  setTimeout(() => {
+    const preview = document.getElementById('previewBody');
+    preview.innerHTML = '';
+
+    for (const scene of parsedData.scenes) {
+      // 씬 배지
+      const badge = document.createElement('div');
+      badge.className = 'scene-badge';
+      badge.innerHTML = `<span>📍 씬 ${scene.scene_number} · ${scene.location || ''}</span>`;
+      preview.appendChild(badge);
+
+      for (const panel of scene.panels) {
+        const filename = panel.image_filename;
+        const imgUrl   = uploadedImages[filename] || null;
+        const dialogues = panel.dialogues || [];
+
+        const panelDiv = document.createElement('div');
+        panelDiv.className = 'webtoon-panel';
+        panelDiv.style.maxWidth = '600px';
+        panelDiv.style.margin = '0 auto 8px';
+
+        if (imgUrl) {
+          panelDiv.innerHTML = `<img src="${imgUrl}" alt="패널">`;
+        } else {
+          panelDiv.innerHTML = `
+            <div style="background:#1a1a2e;aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#888;font-size:0.85rem;border:2px dashed #c0392b;border-radius:8px">
+              <span style="font-size:2rem">⚠️</span>
+              <span>${filename} 없음</span>
+              <span style="font-size:0.75rem">이미지를 업로드해주세요</span>
+            </div>`;
+        }
+
+        // 대사
+        if (dialogues.length > 0) {
+          const dDiv = document.createElement('div');
+          dDiv.className = 'panel-dialogues';
+          for (const d of dialogues) {
+            const cls = {speech:'d-speech',thought:'d-thought',narration:'d-narration'}[d.type] || 'd-speech';
+            const char = d.character && d.type !== 'narration'
+              ? `<span class="d-char">${d.character}</span>` : '';
+            dDiv.innerHTML += `<div class="${cls}">${char}${d.text}</div>`;
+          }
+          panelDiv.appendChild(dDiv);
+        }
+
+        preview.appendChild(panelDiv);
+      }
+    }
+
+    document.getElementById('previewSection').classList.add('visible');
+    document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+    showToast('웹툰 완성! 🎌');
+    btn.disabled = false;
+    btn.innerHTML = '<span>✨ 웹툰 완성하기</span>';
+  }, 100);
+}
+
+// ─── HTML 다운로드 ───────────────────────────────
+function downloadHTML() {
+  if (!parsedData) return;
+  const title = parsedData.title || '웹툰';
+
+  let panelsHTML = '';
+  for (const scene of parsedData.scenes) {
+    panelsHTML += `<div class="scene-label">📍 씬 ${scene.scene_number} · ${scene.location||''}</div>`;
+    for (const panel of scene.panels) {
+      const imgUrl   = uploadedImages[panel.image_filename] || '';
+      const dialogues = panel.dialogues || [];
+      let dHTML = '';
+      for (const d of dialogues) {
+        const cls  = {speech:'d-speech',thought:'d-thought',narration:'d-narration'}[d.type]||'d-speech';
+        const char = d.character && d.type!=='narration' ? `<span class="d-char">${d.character}</span>` : '';
+        dHTML += `<div class="${cls}">${char}${d.text}</div>`;
+      }
+      panelsHTML += `
+      <div class="panel">
+        ${imgUrl ? `<img src="${imgUrl}" alt="패널">` : `<div class="no-img">이미지 없음: ${panel.image_filename}</div>`}
+        ${dHTML ? `<div class="dialogues">${dHTML}</div>` : ''}
+      </div>`;
+    }
+  }
+
+  let charHTML = '';
+  for (const [name, info] of Object.entries(parsedData.characters||{})) {
+    charHTML += `<div class="char-card"><div class="avatar">${name[0]}</div><div><h3>${name}</h3><p>${info.appearance||''}</p><p><i>${info.personality||''}</i></p></div></div>`;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${title}</title>
+<style>
+:root{--bg:#1a1a2e;--card:#16213e;--accent:#e94560;--text:#eaeaea;--muted:#a8a8b3;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic',sans-serif;}
+header{background:linear-gradient(135deg,#0f3460,#e94560);padding:40px 20px;text-align:center;}
+header h1{font-size:2.2rem;font-weight:900;}
+header p{margin-top:6px;color:rgba(255,255,255,0.8);font-size:.9rem;}
+.wrap{max-width:700px;margin:0 auto;padding:30px 20px 60px;}
+.section-title{font-size:1.2rem;font-weight:700;color:var(--accent);border-left:4px solid var(--accent);padding-left:12px;margin:28px 0 16px;}
+.char-card{display:flex;align-items:center;background:var(--card);border-radius:12px;padding:14px;margin-bottom:10px;}
+.avatar{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),#6c63ff);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;margin-right:14px;flex-shrink:0;}
+h3{font-size:1rem;margin-bottom:3px;}p{font-size:.83rem;color:var(--muted);}
+.scene-label{text-align:center;margin:20px 0 8px;}
+.scene-label span{background:rgba(233,69,96,.1);border:1px solid rgba(233,69,96,.3);color:var(--accent);font-size:.82rem;padding:4px 14px;border-radius:20px;}
+.panel{width:100%;margin-bottom:4px;border-radius:6px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.panel img{width:100%;display:block;}
+.no-img{background:var(--card);padding:40px;text-align:center;color:var(--muted);font-size:.85rem;}
+.dialogues{background:var(--card);padding:10px 14px;}
+.d-speech,.d-thought,.d-narration{margin:5px 0;padding:7px 10px;border-radius:8px;font-size:.88rem;line-height:1.5;}
+.d-speech{background:rgba(255,255,255,.04);border-left:3px solid #7c3aed;}
+.d-thought{background:rgba(124,58,237,.08);border-left:3px dashed #7c3aed;font-style:italic;}
+.d-narration{background:rgba(255,200,0,.06);border-left:3px solid #ffc800;color:var(--muted);}
+.d-char{font-weight:700;color:var(--accent);font-size:.75rem;display:block;margin-bottom:2px;}
+footer{text-align:center;padding:30px;color:var(--muted);font-size:.78rem;}
+</style></head>
+<body>
+<header><h1>${title}</h1><p>AI 자동 생성 웹툰 · Grok Aurora</p></header>
+<div class="wrap">
+<h2 class="section-title">등장인물</h2>${charHTML}
+<h2 class="section-title">본편</h2>${panelsHTML}
+</div>
+<footer>${title} · AI 자동 생성</footer>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${title}_webtoon.html`;
+  a.click();
+  showToast('다운로드 완료! 🎉');
+}
+
+// ─── 유틸 ─────────────────────────────────────────
+function showStatus(id, msg, type) {
+  document.getElementById(id).innerHTML =
+    `<div class="status ${type}" style="margin-top:8px">${msg}</div>`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
