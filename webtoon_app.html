@@ -388,7 +388,7 @@
   .webtoon-panel {
     width: 100%;
     max-width: 600px;
-    margin: 0 auto 8px;
+    margin: 0 auto 4px;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
@@ -402,17 +402,32 @@
   .d-thought { border-left: 3px dashed #7c3aed; padding: 6px 10px; margin: 4px 0; border-radius: 6px; background: rgba(124,58,237,0.08); font-size: 0.85rem; font-style: italic; }
   .d-narration { border-left: 3px solid #ffc800; padding: 6px 10px; margin: 4px 0; border-radius: 6px; background: rgba(255,200,0,0.06); font-size: 0.82rem; color: var(--muted); }
   .d-char { font-size: 0.72rem; font-weight: 700; color: var(--accent1); display: block; margin-bottom: 2px; }
+  /* 씬 사이 여백 - 첫번째 씬은 작게, 그 이후는 넉넉하게 */
   .scene-badge {
     text-align: center;
-    margin: 16px 0 8px;
+    margin: 60px 0 16px;  /* 상단 여백 넉넉하게 */
+    position: relative;
+  }
+  .scene-badge:first-child {
+    margin-top: 10px;     /* 첫 씬은 작게 */
+  }
+  /* 씬 사이 구분선 효과 */
+  .scene-badge::before {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent1), transparent);
+    margin: 0 auto 20px;
   }
   .scene-badge span {
     background: rgba(255,77,109,0.1);
     border: 1px solid rgba(255,77,109,0.3);
     color: var(--accent1);
-    font-size: 0.8rem;
-    padding: 4px 14px;
+    font-size: 0.85rem;
+    padding: 6px 18px;
     border-radius: 20px;
+    font-weight: 700;
   }
 
   /* 토스트 */
@@ -743,24 +758,8 @@ function deleteImage(name) {
   renderImageList();
 }
 
-// ─── Canvas 말풍선 합성 ───────────────────────────
-function drawBubble(ctx, text, charName, type, cx, cy) {
-  const maxW = 220, pad = 14, lh = 26, fs = 18;
-  ctx.font = `${fs}px 'Malgun Gothic', sans-serif`;
-  const words = text.split('');
-  const lines = [];
-  let line = '';
-  for (const ch of words) {
-    if (ctx.measureText(line + ch).width > maxW - pad*2) { lines.push(line); line = ch; }
-    else line += ch;
-  }
-  if (line) lines.push(line);
-  const charH = (charName && type !== 'narration') ? 22 : 0;
-  const bw = Math.min(maxW, Math.max(...lines.map(l => ctx.measureText(l).width)) + pad*2);
-  const bh = lines.length * lh + pad*2 + charH;
-  const bx = Math.max(10, Math.min(ctx.canvas.width - bw - 10, cx - bw/2));
-  const by = Math.max(10, Math.min(ctx.canvas.height - bh - 10, cy - bh/2));
-  const r = 14;
+// ─── Canvas 말풍선 합성 (꼬리방향 자동) ─────────────
+function drawRoundRect(ctx, bx, by, bw, bh, r) {
   ctx.beginPath();
   ctx.moveTo(bx+r, by); ctx.lineTo(bx+bw-r, by);
   ctx.quadraticCurveTo(bx+bw, by, bx+bw, by+r);
@@ -769,43 +768,113 @@ function drawBubble(ctx, text, charName, type, cx, cy) {
   ctx.lineTo(bx+r, by+bh);
   ctx.quadraticCurveTo(bx, by+bh, bx, by+bh-r);
   ctx.lineTo(bx, by+r);
-  ctx.quadraticCurveTo(bx, by, bx+r, by); ctx.closePath();
-  if (type === 'thought') {
-    ctx.fillStyle = 'rgba(230,230,255,0.95)'; ctx.strokeStyle = 'rgba(100,100,200,0.9)'; ctx.setLineDash([6,3]);
-  } else if (type === 'narration') {
-    ctx.fillStyle = 'rgba(255,255,200,0.95)'; ctx.strokeStyle = 'rgba(180,160,0,0.9)'; ctx.setLineDash([]);
+  ctx.quadraticCurveTo(bx, by, bx+r, by);
+  ctx.closePath();
+}
+
+function drawTail(ctx, bx, by, bw, bh, tailDir, scale, fillColor) {
+  const ts = 22*scale, tw = 14*scale;
+  let p1, p2, p3;
+  if (tailDir === 'down-left') {
+    p1=[bx+bw*0.25-tw/2, by+bh]; p2=[bx+bw*0.25+tw, by+bh]; p3=[bx+bw*0.2-tw, by+bh+ts];
+  } else if (tailDir === 'down-right') {
+    p1=[bx+bw*0.75-tw, by+bh]; p2=[bx+bw*0.75+tw/2, by+bh]; p3=[bx+bw*0.8+tw, by+bh+ts];
+  } else if (tailDir === 'down-center') {
+    p1=[bx+bw*0.5-tw/2, by+bh]; p2=[bx+bw*0.5+tw/2, by+bh]; p3=[bx+bw*0.5, by+bh+ts];
+  } else if (tailDir === 'up-left') {
+    p1=[bx+bw*0.25-tw/2, by]; p2=[bx+bw*0.25+tw, by]; p3=[bx+bw*0.2-tw, by-ts];
   } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.97)'; ctx.strokeStyle = 'rgba(30,30,30,0.9)'; ctx.setLineDash([]);
+    p1=[bx+bw*0.75-tw, by]; p2=[bx+bw*0.75+tw/2, by]; p3=[bx+bw*0.8+tw, by-ts];
   }
-  ctx.lineWidth = 2.5; ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
-  let ty = by + pad;
-  if (charName && type !== 'narration') {
-    ctx.font = `bold 14px 'Malgun Gothic', sans-serif`;
-    ctx.fillStyle = '#c0392b';
-    ctx.fillText(charName, bx+pad, ty+14); ty += charH;
+  ctx.beginPath(); ctx.moveTo(...p1); ctx.lineTo(...p2); ctx.lineTo(...p3); ctx.closePath();
+  ctx.fillStyle = fillColor; ctx.fill();
+  ctx.strokeStyle = 'rgba(20,20,20,1)'; ctx.lineWidth = Math.max(2, 2.5*scale);
+  ctx.beginPath(); ctx.moveTo(...p1); ctx.lineTo(...p3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(...p2); ctx.lineTo(...p3); ctx.stroke();
+}
+
+function drawThoughtDots(ctx, bx, by, bw, bh, scale, isAbove) {
+  const dots = isAbove
+    ? [[bx+bw*0.35, by+bh+6*scale, 5*scale],[bx+bw*0.28, by+bh+16*scale, 3.5*scale]]
+    : [[bx+bw*0.35, by-6*scale, 5*scale],[bx+bw*0.28, by-16*scale, 3.5*scale]];
+  dots.forEach(([dx,dy,r]) => {
+    ctx.beginPath(); ctx.arc(dx, dy, r, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(235,235,255,0.97)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(80,80,200,1)'; ctx.lineWidth = Math.max(1.5, 2*scale); ctx.stroke();
+  });
+}
+
+function drawBubble(ctx, text, charName, type, cx, cy, W, H, tailDir) {
+  const scale=W/800, fs=Math.round(22*scale);
+  const pad=Math.round(16*scale), lh=Math.round(30*scale);
+  const maxW=Math.round(260*scale), r=Math.round(18*scale);
+
+  ctx.font = `${fs}px 'Malgun Gothic', Arial, sans-serif`;
+  // 줄바꿈 (대사 길이에 맞게 자동)
+  const lines=[]; let line='';
+  for (const ch of text.split('')) {
+    if (ctx.measureText(line+ch).width > maxW-pad*2) { lines.push(line); line=ch; }
+    else line+=ch;
   }
-  ctx.font = `${fs}px 'Malgun Gothic', sans-serif`;
-  ctx.fillStyle = type === 'narration' ? '#555' : '#111';
-  lines.forEach((l, i) => ctx.fillText(l, bx+pad, ty + i*lh + fs));
+  if (line) lines.push(line);
+
+  // 말풍선 크기: 대사 길이에 딱 맞게
+  const tw=Math.max(...lines.map(l=>ctx.measureText(l).width));
+  const bw=tw+pad*2;   // maxW 제한 없이 내용에 맞게
+  const bh=lines.length*lh+pad*2;
+  const bx=Math.max(8, Math.min(W-bw-8, cx-bw/2));
+  const by=Math.max(8, Math.min(H-bh-8, cy-bh/2));
+
+  let fillColor, strokeColor;
+  if (type==='thought') {
+    fillColor='rgba(235,235,255,0.97)'; strokeColor='rgba(80,80,200,1)'; ctx.setLineDash([8,4]);
+  } else if (type==='narration') {
+    fillColor='rgba(255,255,210,0.97)'; strokeColor='rgba(160,130,0,1)'; ctx.setLineDash([]);
+  } else {
+    fillColor='rgba(255,255,255,0.98)'; strokeColor='rgba(20,20,20,1)'; ctx.setLineDash([]);
+  }
+
+  drawRoundRect(ctx, bx, by, bw, bh, r);
+  ctx.fillStyle=fillColor; ctx.strokeStyle=strokeColor;
+  ctx.lineWidth=Math.max(2, 3*scale); ctx.fill(); ctx.stroke(); ctx.setLineDash([]);
+
+  if (type==='speech' && tailDir) {
+    drawTail(ctx, bx, by, bw, bh, tailDir, scale, fillColor);
+  } else if (type==='thought') {
+    const isAbove = cy < H*0.5;
+    drawThoughtDots(ctx, bx, by, bw, bh, scale, isAbove);
+  }
+
+  // 캐릭터 이름 제거 → 대사만 표시
+  ctx.font=`${fs}px 'Malgun Gothic', Arial, sans-serif`;
+  ctx.fillStyle=type==='narration' ? '#444' : '#111';
+  const ty=by+pad;
+  lines.forEach((l,i) => ctx.fillText(l, bx+pad, ty+i*lh+fs));
 }
 
 async function compositeImage(imgUrl, dialogues) {
   return new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width; canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
+      const W=img.width, H=img.height;
+      const canvas=document.createElement('canvas');
+      canvas.width=W; canvas.height=H;
+      const ctx=canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-      const positions = [
-        [img.width*0.5, img.height*0.10],
-        [img.width*0.22, img.height*0.82],
-        [img.width*0.75, img.height*0.75],
+
+      // 위치 + 꼬리 방향 (위치에 따라 자동)
+      const configs = [
+        { pos:[W*0.55, H*0.10], tail:'down-left'  },  // 상단 → 꼬리 아래
+        { pos:[W*0.22, H*0.80], tail:'up-right'   },  // 하단 좌 → 꼬리 위
+        { pos:[W*0.75, H*0.75], tail:'up-left'    },  // 하단 우 → 꼬리 위
       ];
+
       dialogues.slice(0,3).forEach((d, i) => {
-        if (d.text) drawBubble(ctx, d.text, d.character||'', d.type||'speech', positions[i][0], positions[i][1]);
+        if (!d.text) return;
+        const {pos, tail} = configs[i];
+        drawBubble(ctx, d.text, d.character||'', d.type||'speech', pos[0], pos[1], W, H, tail);
       });
-      resolve(canvas.toDataURL('image/jpeg', 0.92));
+      resolve(canvas.toDataURL('image/jpeg', 0.93));
     };
     img.src = imgUrl;
   });
