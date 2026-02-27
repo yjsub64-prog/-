@@ -690,11 +690,25 @@ function copyPrompt(el, text) {
 }
 
 // ─── 이미지 업로드 ────────────────────────────────
+function normalizeFilename(name) {
+  // s01_p01.png.jpeg → s01_p01.png
+  // s01_p01.jpeg → s01_p01.png
+  // s01_p01.jpg → s01_p01.png
+  // S01_P01.PNG → s01_p01.png
+  let n = name.toLowerCase();
+  // 중복 확장자 제거 (예: .png.jpeg)
+  n = n.replace(/\.(png|jpg|jpeg)(\.(png|jpg|jpeg))+$/, '.$1');
+  // jpg/jpeg → png 로 통일
+  n = n.replace(/\.(jpg|jpeg)$/, '.png');
+  return n;
+}
+
 function handleImageUpload(files) {
   for (const file of files) {
     const reader = new FileReader();
+    const normalizedName = normalizeFilename(file.name);
     reader.onload = e => {
-      uploadedImages[file.name] = e.target.result;
+      uploadedImages[normalizedName] = e.target.result;
       renderImageList();
     };
     reader.readAsDataURL(file);
